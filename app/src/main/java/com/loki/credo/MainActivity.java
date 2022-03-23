@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
 
     public void callNumber() {
 
-        String code = "*144%23";
+        String code = "911";
 
         String phoneNumber = String.format("tel: %s",code);
 
