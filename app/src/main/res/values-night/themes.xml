@@ -1,6 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.Credo" parent="Theme.MaterialComponents.DayNight">
+        <item name="android:textColorPrimary">@color/white</item>
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/main_theme</item>
         <item name="colorPrimaryVariant">@color/main_theme</item>
