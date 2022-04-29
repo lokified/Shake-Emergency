@@ -23,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -76,22 +77,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean locationPermissionGranted;
 
-    // The geographical location where the device is currently located. That is, the last-known
-    // location retrieved by the Fused Location Provider.
     private Location lastKnownLocation;
 
     // Keys for storing activity state.
-    // [START maps_current_place_state_keys]
     private static final String KEY_CAMERA_POSITION = "camera_position";
     private static final String KEY_LOCATION = "location";
-    // [END maps_current_place_state_keys]
 
-    // Used for selecting the current place.
-    private static final int M_MAX_ENTRIES = 5;
-    private String[] likelyPlaceNames;
-    private String[] likelyPlaceAddresses;
-    private List[] likelyPlaceAttributions;
-    private LatLng[] likelyPlaceLatLngs;
+
+    List<Address> addressList;
+    String places;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,6 +130,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.option_get_place) {
             showCurrentPlace();
+            showBottomSheetDialog();
         }
         return true;
     }
@@ -180,6 +175,26 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
 
+    private void showBottomSheetDialog() {
+
+        final BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        bottomSheetDialog.setContentView(R.layout.bottom_sheet_layout);
+
+        Button sendBtn = bottomSheetDialog.findViewById(R.id.send_btn);
+
+        bottomSheetDialog.show();
+
+        sendBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                bottomSheetDialog.dismiss();
+                Toast.makeText(MapActivity.this, "Sent", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
+
+
     private void getDeviceLocation() {
         try {
             if (locationPermissionGranted) {
@@ -197,8 +212,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                     map.moveCamera(CameraUpdateFactory.newLatLngZoom(
                                             new LatLng(lastKnownLocation.getLatitude(),
                                                     lastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+
                                 }
-                            } else {
+                            }
+                            else {
+
+                                Toast.makeText(MapActivity.this, "location is null", Toast.LENGTH_SHORT).show();
                                 Log.d(TAG, "Current location is null. Using defaults.");
                                 Log.e(TAG, "Exception: %s", task.getException());
                                 map.moveCamera(CameraUpdateFactory
@@ -279,8 +298,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             FindCurrentPlaceRequest request =
                     FindCurrentPlaceRequest.newInstance(placeFields);
 
-            // Get the likely places - that is, the businesses and other points of interest that
-            // are the best match for the device's current location.
+            // Get the likely places
             @SuppressWarnings("MissingPermission") final
             Task<FindCurrentPlaceResponse> placeResult =
                     placesClient.findCurrentPlace(request);
@@ -290,37 +308,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     if (task.isSuccessful() && task.getResult() != null) {
                         FindCurrentPlaceResponse likelyPlaces = task.getResult();
 
-                        // Set the count, handling cases where less than 5 entries are returned.
-                        int count;
-                        if (likelyPlaces.getPlaceLikelihoods().size() < M_MAX_ENTRIES) {
-                            count = likelyPlaces.getPlaceLikelihoods().size();
-                        } else {
-                            count = M_MAX_ENTRIES;
-                        }
-
-                        int i = 0;
-                        likelyPlaceNames = new String[count];
-                        likelyPlaceAddresses = new String[count];
-                        likelyPlaceAttributions = new List[count];
-                        likelyPlaceLatLngs = new LatLng[count];
-
-                        for (PlaceLikelihood placeLikelihood : likelyPlaces.getPlaceLikelihoods()) {
-                            // Build a list of likely places to show the user.
-                            likelyPlaceNames[i] = placeLikelihood.getPlace().getName();
-                            likelyPlaceAddresses[i] = placeLikelihood.getPlace().getAddress();
-                            likelyPlaceAttributions[i] = placeLikelihood.getPlace()
-                                    .getAttributions();
-                            likelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
-
-                            i++;
-                            if (i > (count - 1)) {
-                                break;
-                            }
-                        }
 
                         // Show a dialog offering the user the list of likely places, and add a
-                        // marker at the selected place.
-                        MapActivity.this.openPlacesDialog();
+
                     }
                     else {
                         Log.e(TAG, "Exception: %s", task.getException());
@@ -344,39 +334,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
 
 
-    private void openPlacesDialog() {
-        // Ask the user to choose the place where they are now.
-        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // The "which" argument contains the position of the selected item.
-                LatLng markerLatLng = likelyPlaceLatLngs[which];
-                String markerSnippet = likelyPlaceAddresses[which];
-                if (likelyPlaceAttributions[which] != null) {
-                    markerSnippet = markerSnippet + "\n" + likelyPlaceAttributions[which];
-                }
-
-                // Add a marker for the selected place, with an info window
-                // showing information about that place.
-                map.addMarker(new MarkerOptions()
-                        .title(likelyPlaceNames[which])
-                        .position(markerLatLng)
-                        .snippet(markerSnippet));
-
-                // Position the map's camera at the location of the marker.
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
-                        DEFAULT_ZOOM));
-            }
-        };
-
-        // Display the dialog.
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.pick_place)
-                .setItems(likelyPlaceNames, listener)
-                .show();
-    }
-
-
     @SuppressLint("MissingPermission")
     private void updateLocationUI() {
         if (map == null) {
@@ -396,42 +353,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             Log.e("Exception: %s", e.getMessage());
         }
     }
-
-//    public void showSendDialog() {
-//        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(MapActivity.this, R.style.AppBottomSheetDialogTheme);
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-//            setWhiteNavigationBar(bottomSheetDialog);
-//        }
-//
-//        bottomSheetDialog.setContentView(R.layout.send_button);
-//        bottomSheetDialog.setCanceledOnTouchOutside(false);
-//        bottomSheetDialog.show();
-//    }
-//
-//    @RequiresApi(api = Build.VERSION_CODES.M)
-//    private void setWhiteNavigationBar(BottomSheetDialog bottomSheetDialog) {
-//
-//        Window window = bottomSheetDialog.getWindow();
-//        if (window != null) {
-//            DisplayMetrics metrics = new DisplayMetrics();
-//            window.getWindowManager().getDefaultDisplay().getMetrics(metrics);
-//
-//            GradientDrawable dimDrawable = new GradientDrawable();
-//            // ...customize  dim effect
-//
-//            GradientDrawable navigationBarDrawable = new GradientDrawable();
-//            navigationBarDrawable.setShape(GradientDrawable.RECTANGLE);
-//            navigationBarDrawable.setColor(Color.WHITE);
-//
-//            Drawable[] layers = {dimDrawable, navigationBarDrawable};
-//
-//            LayerDrawable windowBackground = new LayerDrawable(layers);
-//
-//            windowBackground.setLayerInsetTop(1, metrics.heightPixels);
-//
-//            window.setBackgroundDrawable(windowBackground);
-//        }
-//    }
 
 }
 
