@@ -19,18 +19,20 @@
 
     <style name="NoactionBar" parent="Theme.MaterialComponents.DayNight.NoActionBar">
 
-        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorPrimary">@color/grey</item>
 
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/main_theme</item>
         <item name="colorPrimaryVariant">@color/main_theme</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorOnPrimary">@color/grey</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/main_theme</item>
         <item name="colorSecondaryVariant">@color/main_theme</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+        <item name="android:itemTextAppearance">@color/grey</item>
+
     </style>
 
 </resources>

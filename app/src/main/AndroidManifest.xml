@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
 
     <application
         android:allowBackup="true"
@@ -15,13 +16,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Credo">
         <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:theme="@style/NoactionBar"/>
+        <activity
             android:name=".MapActivity"
-            android:exported="false">
+            android:exported="false" />
 
-        </activity>
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
+
         <activity
             android:name=".SplashActivity"
             android:exported="true"
@@ -35,7 +40,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/NoactionBar"/>
+            android:theme="@style/NoactionBar" />
     </application>
 
 </manifest>
